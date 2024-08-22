@@ -2,12 +2,28 @@ import { MessageBase } from './message-base';
 import { MessageType, TextDataPayload } from '../models/message-types';
 
 export class MessageListener extends MessageBase {
-  async onOpenKeyboard(): Promise<void> {
-    return this.listenForMessage<void>(MessageType.OpenKeyboard);
+  listenForOpenKeyboard(process: () => { message: string }) {
+    return this.listenAndRespond<void, { message: string; acknowledged: boolean }>(
+      MessageType.OpenKeyboard,
+      () => {
+        const response = process();
+        return { ...response, acknowledged: true };
+      },
+      (error) => console.error('Error handling OpenKeyboard:', error)
+    );
   }
 
-  async onSendTextData(): Promise<string> {
-    const payload = await this.listenForMessage<TextDataPayload>(MessageType.SendTextData);
-    return payload.text;
+  listenForSendTextData(process: (text: string) => { result: string }) {
+    return this.listenAndRespond<TextDataPayload, { result: string; acknowledged: boolean }>(
+      MessageType.SendTextData,
+      (payload) => {
+        if (payload) {
+          const response = process(payload.text);
+          return { ...response, acknowledged: true };
+        }
+        throw new Error('Payload is undefined');
+      },
+      (error) => console.error('Error handling SendTextData:', error)
+    );
   }
 }
