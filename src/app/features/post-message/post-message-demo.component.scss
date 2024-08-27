@@ -1,26 +1,40 @@
+// app.component.scss
 :host {
   display: block;
   height: 100vh;
-  padding: 20px;
   box-sizing: border-box;
   background-color: #f0f4f8;
+  overflow: hidden;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 20px;
+ //transition in
+  transition: ease-out .5s;
+
+  &.keyboard-open {
+    transition: ease-in 5s;
+    height: calc(100% - 191px);
+  }
 }
 
 .main-card {
-  height: calc(100% - 40px);
+  flex: 1;
   display: flex;
   flex-direction: column;
   background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
 mat-card-header {
   background-color: #3f51b5;
   color: white;
   padding: 16px;
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
 }
 
 mat-card-content {
@@ -120,12 +134,12 @@ h3 {
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  :host {
+  .app-container {
     padding: 10px;
-  }
 
-  .main-card {
-    height: calc(100% - 20px);
+    &.keyboard-open {
+      height: calc(100% - 191px);
+    }
   }
 
   .content-container {

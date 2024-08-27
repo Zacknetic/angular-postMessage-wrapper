@@ -1,7 +1,7 @@
 // post-message-demo.component.ts
 
 import { Component, OnInit, OnDestroy, NgZone, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
-import { PostMessageWrapper } from './post-message-wrapper';
+import { PostMessageWrapper } from '../../lib/postMessage/post-message-wrapper';
 import { CommonModule, NgFor, NgIf, DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
@@ -13,7 +13,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
-import { MessageMap } from './post-message-types';
+import { MessageMap } from '../../lib/models/post-message-types';
+import { OnScreenKeyboardComponent } from '../keyboard/keyboard.component';
 
 interface ChatMessage {
   direction: 'to' | 'from';
@@ -24,7 +25,7 @@ interface ChatMessage {
 @Component({
   selector: 'app-post-message-demo',
   standalone: true,
-  imports: [NgFor, NgIf, CommonModule, DatePipe, MatButtonModule, MatIconModule, MatInputModule, MatCardModule, MatFormFieldModule, MatCheckboxModule, FormsModule, ReactiveFormsModule, MatTooltipModule, MatListModule, MatDividerModule],
+  imports: [NgFor, NgIf, CommonModule, DatePipe, MatButtonModule, MatIconModule, MatInputModule, MatCardModule, MatFormFieldModule, MatCheckboxModule, FormsModule, ReactiveFormsModule, MatTooltipModule, MatListModule, MatDividerModule, OnScreenKeyboardComponent],
   templateUrl: './post-message-demo.component.html',
   styleUrl: './post-message-demo.component.scss',
 })
@@ -34,6 +35,7 @@ export class PostMessageDemoComponent implements OnInit, OnDestroy, AfterViewChe
 
   protected isParent: boolean = !window.opener;
   #wrapper: PostMessageWrapper | null = null;
+  volume: number = 50;
 
   get postWrapper(): PostMessageWrapper {
     if (!this.#wrapper) throw new Error('Wrapper not initialized');
@@ -47,7 +49,8 @@ export class PostMessageDemoComponent implements OnInit, OnDestroy, AfterViewChe
   private childWindow: Window | null = null;
   log: string[] = [];
   chatMessages: ChatMessage[] = [];
-  isOpenKeyboard: boolean = false;
+  isKeyboardOpen: boolean = false;
+  isOtherKeyboardOpen: boolean = false;
   stringData: string = '';
 
   constructor(private ngZone: NgZone) {}
@@ -103,12 +106,13 @@ export class PostMessageDemoComponent implements OnInit, OnDestroy, AfterViewChe
     this.addToLog('Setting up listeners...');
 
     this.postWrapper.addListener('openKeyboard', async request => {
-      const isOpenKeyboard = await this.openKeyboard(request.payload.openKeyboard).catch(error => {
+      this.isKeyboardOpen = request.payload.openKeyboard;
+      await this.openKeyboard(request.payload.openKeyboard).catch(error => {
         this.addToLog(`Failed to change keyboard state: ${error.message}`);
         throw error;
       });
-      this.addToLog(`Keyboard state successfully changed to ${isOpenKeyboard}, reporting back...`);
-      return { isKeyboardOpened: isOpenKeyboard };
+      this.addToLog(`Keyboard state successfully changed to ${this.isKeyboardOpen}, reporting back...`);
+      return { isKeyboardOpen: this.isKeyboardOpen };
     });
 
     this.postWrapper.addListener(`sendChat`, async request => {
@@ -116,17 +120,43 @@ export class PostMessageDemoComponent implements OnInit, OnDestroy, AfterViewChe
       const chatHasThisMessage = this.chatMessages.some(message => message.content === `Received: ${request.payload.stringData}`);
       return { isChatSent: chatHasThisMessage };
     });
+
+    this.postWrapper.addListener(`startCall`, async request => {
+      const callHasStarted = true;
+      this.addToLog(`Call started: ${callHasStarted}`);
+      return { isCallJoined: callHasStarted };
+    });
+
+    this.postWrapper.addListener(`endCall`, async () => {
+      return { isCallEnded: true };
+    });
+
+    this.postWrapper.addListener(`shareScreen`, async request => {
+      this.addToLog(`Screen sharing ${request.payload.shareScreen ? 'enabled' : 'disabled'}`);
+      return { isScreenShared: request.payload.shareScreen };
+    });
+
+    this.postWrapper.addListener(`setVolume`, async request => {
+      this.volume += request.payload.changeAmount;
+      this.addToLog(`Volume ${request.payload.changeAmount > 0 ? 'increased' : 'decreased'} by ${Math.abs(request.payload.changeAmount)} to ${this.volume}`);
+      return { currentVolume: this.volume };
+    });
+
+    this.postWrapper.addListener('scanDocument', async request => {
+      this.addToLog(`Document scanning ${request.payload.openScanner ? 'enabled' : 'disabled'}`);
+      return { isDocumentScanned: request.payload.openScanner };
+    });
   }
 
   /**
    * Example usage of try-catch block to handle errors.
    */
   async handleOpenKeyboard() {
-    this.openKeyboard(!this.isOpenKeyboard);
-    this.addToLog('Toggling keyboard...');
+    this.addToLog("Toggling the other's keyboard...");
     try {
-      const response = await this.postWrapper.sendRequest('openKeyboard', { openKeyboard: this.isOpenKeyboard });
-      this.addToLog(`Keyboard open state reported as: ${response.isKeyboardOpened}`);
+      const response = await this.postWrapper.sendRequest('openKeyboard', { openKeyboard: !this.isOtherKeyboardOpen });
+      this.isOtherKeyboardOpen = response.isKeyboardOpen;
+      this.addToLog(`ATTENTION - KEYBOARD STATE HAS FINALLY ${response.isKeyboardOpen ? 'OPENED' : 'CLOSED'}`);
     } catch (error) {
       console.log(error);
       this.addToLog(`Request failed: ${error}`);
@@ -135,13 +165,13 @@ export class PostMessageDemoComponent implements OnInit, OnDestroy, AfterViewChe
 
   /**
    * Example usage of .then() and .catch() to handle errors instead of try-catch block.
-   * 
+   *
    * Please note: After defining the 'sendChat' listener in the setupListeners() method, the request object must be correctly typed.
    * @param event
    */
   handleSendStringData(event?: any): void {
-    if (event && (event.target as HTMLElement).tagName !== 'INPUT') {
-      return; // Only proceed if the event originated from an input element
+    if (event && event.target && (event.target as HTMLElement).tagName !== 'INPUT' && event.type !== 'click') {
+      return; // Only proceed if the event originated from an input element or a click event
     }
     if (!this.stringData.trim()) return;
     this.addToLog('Sending string data...');
@@ -149,8 +179,7 @@ export class PostMessageDemoComponent implements OnInit, OnDestroy, AfterViewChe
       .sendRequest('sendChat', { stringData: this.stringData })
       .then(response => {
         this.addToLog(`String data successfully arrived: ${response.isChatSent}`);
-        this.addToChatMessages('to', `Sent: ${this.stringData}`);
-        this.stringData = ''; // Clear the input after sending
+        this.onSend();
       })
       .catch(error => {
         console.log(error);
@@ -160,7 +189,7 @@ export class PostMessageDemoComponent implements OnInit, OnDestroy, AfterViewChe
 
   /**
    * Example usage of MessageMap['startCall']['request'], simplifying the argument type.
-   * @param data 
+   * @param data
    */
   handleStartCall(data: MessageMap['startCall']['request']) {
     this.addToLog('Requesting to start call...');
@@ -168,6 +197,58 @@ export class PostMessageDemoComponent implements OnInit, OnDestroy, AfterViewChe
       .sendRequest('startCall', data)
       .then(response => {
         this.addToLog(`Call started: ${response.isCallJoined} in room ${data.roomId}`);
+      })
+      .catch(error => {
+        console.log(error);
+        this.addToLog(`Request failed: ${error.message}`);
+      });
+  }
+
+  handleEndCall() {
+    this.addToLog('Requesting to end call...');
+    this.postWrapper
+      .sendRequest('endCall', {})
+      .then(response => {
+        this.addToLog(`Call ended: ${response.isCallEnded}`);
+      })
+      .catch(error => {
+        console.log(error);
+        this.addToLog(`Request failed: ${error.message}`);
+      });
+  }
+
+  handleShareScreen() {
+    this.addToLog('Requesting to share screen...');
+    this.postWrapper
+      .sendRequest('shareScreen', { shareScreen: true })
+      .then(response => {
+        this.addToLog(`Screen shared: ${response.isScreenShared}`);
+      })
+      .catch(error => {
+        console.log(error);
+        this.addToLog(`Request failed: ${error.message}`);
+      });
+  }
+
+  handleScanDocument() {
+    this.addToLog('Requesting to scan document...');
+    this.postWrapper
+      .sendRequest('scanDocument', { openScanner: true })
+      .then(response => {
+        this.addToLog(`Document scanned: ${response.isDocumentScanned}`);
+      })
+      .catch(error => {
+        console.log(error);
+        this.addToLog(`Request failed: ${error.message}`);
+      });
+  }
+
+  handleSetVolume(changeAmount: number) {
+    this.addToLog('Requesting to set volume...');
+    this.postWrapper
+      .sendRequest('setVolume', { changeAmount })
+      .then(response => {
+        this.addToLog(`Volume set: ${response.currentVolume}`);
       })
       .catch(error => {
         console.log(error);
@@ -187,7 +268,26 @@ export class PostMessageDemoComponent implements OnInit, OnDestroy, AfterViewChe
 
   private async openKeyboard(state: boolean) {
     // throw new Error(`Expected: Keyboard state. Received: A bowl of petunias.`);
-    this.isOpenKeyboard = state;
-    return this.isOpenKeyboard;
+    const waitTime = this.isKeyboardOpen ? 5000 : 500;
+    return new Promise<boolean>((resolve, reject) => {
+      setTimeout(() => {
+        resolve(state);
+      }, waitTime);
+    });
+  }
+
+  onSend() {
+    this.addToChatMessages('to', `Sent: ${this.stringData}`);
+    this.stringData = ''; // Clear the input after sending
+  }
+
+  onKeyPress(key: string) {
+    if (key === 'Backspace') {
+      this.stringData = this.stringData.slice(0, -1);
+    } else if (key === '\n') {
+      this.handleSendStringData();
+    } else {
+      this.stringData += key;
+    }
   }
 }

@@ -20,12 +20,12 @@ export interface ResponseMessage<T = unknown> extends BaseMessage {
   state?: T;
 }
 
-export type SupportedFunctions = 'openKeyboard' | 'sendChat' | 'startCall' | 'endCall' | 'shareScreen' | 'setVolume' | 'getVolume';
+export type SupportedFunctions = 'openKeyboard' | 'sendChat' | 'startCall' | 'endCall' | 'shareScreen' | 'setVolume' | 'getVolume' | 'scanDocument';
 
 export type MessageMap = {
   openKeyboard: {
     request: { openKeyboard: boolean };
-    response: { isKeyboardOpened: boolean };
+    response: { isKeyboardOpen: boolean };
   };
   sendChat: {
     request: { stringData: string };
@@ -40,16 +40,19 @@ export type MessageMap = {
     response: { isCallEnded: boolean };
   };
   shareScreen: {
-    request: {shareScreen: boolean};
+    request: { shareScreen: boolean };
     response: { isScreenShared: boolean };
   };
   setVolume: {
-    request: { volume: number } | { increase: number } | { decrease: number };
+    request: { changeAmount: number };
     response: { currentVolume: number };
   };
   getVolume: {
     request: {};
     response: { volume: number };
   };
-
+  scanDocument: {
+    request: { openScanner: boolean };
+    response: { isDocumentScanned: boolean };
+  };
 };

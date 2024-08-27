@@ -5,5 +5,8 @@
     ],
     "workbench.colorCustomizations": {
     },
-    "editor.guides.bracketPairs": "active"
+    "editor.guides.bracketPairs": "active",
+    "cSpell.words": [
+        "dialpad"
+    ]
 }

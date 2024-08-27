@@ -1,0 +1,66 @@
+<div class="app-container" [class.keyboard-open]="isKeyboardOpen">
+  <mat-card class="main-card">
+    <mat-card-header>
+      <mat-card-title>Post Message Demo</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="content-container">
+        <div class="chat-container">
+          <h3>Chat</h3>
+          <div class="chat-messages" #chatMessagesContainer>
+            <div *ngFor="let message of chatMessages" [ngClass]="{'message-to': message.direction === 'to', 'message-from': message.direction === 'from'}">
+              <div class="message-content">
+                <pre>{{ message.content }}</pre>
+              </div>
+              <div class="message-timestamp">
+                {{ message.timestamp | date:'short' }}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="log-container">
+          <h3>Log</h3>
+          <div class="log-messages" #logMessagesContainer>
+            <div class="log-message" *ngFor="let message of log">
+              {{ message }}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="input-container">
+        <mat-form-field appearance="outline">
+          <input matInput [(ngModel)]="stringData" placeholder="Type a message..." (keyup.enter)="handleSendStringData($event)">
+        </mat-form-field>
+        <button mat-raised-button color="primary" (click)="handleSendStringData()">
+          <mat-icon>send</mat-icon> Send
+        </button>
+      </div>
+      <div class="bottom-controls">
+        <button mat-raised-button color="accent" (click)="createWrapper(4201)">
+          <mat-icon>refresh</mat-icon> Recreate Child
+        </button>
+        <div class="action-buttons">
+          <button mat-icon-button (click)="handleOpenKeyboard()">
+            <mat-icon matTooltip="Open Keyboard">keyboard</mat-icon>
+          </button>
+          <button mat-icon-button (click)="handleStartCall({roomId: 'pineapple pizza', zoomToken: 'abc123'})">
+            <mat-icon matTooltip="Start Call">call</mat-icon>
+          </button>
+          <button mat-icon-button (click)="handleScanDocument()">
+            <mat-icon matTooltip="Scan ID">document_scanner</mat-icon>
+          </button>
+          <button mat-icon-button (click)="handleShareScreen()">
+            <mat-icon matTooltip="Share Screen">present_to_all</mat-icon>
+          </button>
+          <button mat-icon-button (click)="handleSetVolume(-5)">
+            <mat-icon matTooltip="Decrease Volume">volume_down</mat-icon>   
+          </button>
+          <button mat-icon-button (click)="handleSetVolume(5)">
+            <mat-icon matTooltip="Increase Volume">volume_up</mat-icon>
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  <app-on-screen-keyboard [isVisible]="isKeyboardOpen" (keyPress)="onKeyPress($event)"></app-on-screen-keyboard>
+</div>

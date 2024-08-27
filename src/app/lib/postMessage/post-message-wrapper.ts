@@ -1,5 +1,5 @@
-import { BaseMessage, RequestMessage, ResponseMessage, SupportedFunctions, MessageMap, MessageHandler } from './post-message-types';
-import { PostMessageError, isPostMessageError, reconstructError } from './post-message-errors';
+import { BaseMessage, RequestMessage, ResponseMessage, SupportedFunctions, MessageMap, MessageHandler } from '../models/post-message-types';
+import { PostMessageError, isPostMessageError, reconstructError } from '../models/post-message-errors';
 
 export class PostMessageWrapper {
   private handlers: Map<string, MessageHandler<any>> = new Map();
