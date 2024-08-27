@@ -1,0 +1,9 @@
+{
+    "cSpell.ignoreWords": [
+        "Parens",
+        "devkit"
+    ],
+    "workbench.colorCustomizations": {
+    },
+    "editor.guides.bracketPairs": "active"
+}

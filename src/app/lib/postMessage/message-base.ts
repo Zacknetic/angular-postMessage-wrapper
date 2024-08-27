@@ -5,7 +5,7 @@ export class MessageBase {
   protected pendingRequests = new Map<string, (event: MessageEvent) => void>();
 
   constructor(
-    protected targetWindow: Window, // The target window to send messages to
+    protected targetWindow: Window, // The target window to send messages to (should be window.parent in the child)
     private appConfigService: AppConfigService // Service to provide dynamic origin
   ) {}
 
@@ -76,6 +76,8 @@ export class MessageBase {
     handleError?: (error: any) => void
   ) {
     const handleMessage = async (event: MessageEvent) => {
+      console.log(`Listener received message from origin: ${event.origin}`);
+
       if (event.origin === this.appConfigService.getTargetOrigin() && event.data.type === type) {
         const requestId = event.data.requestId;
 
@@ -86,10 +88,11 @@ export class MessageBase {
 
         try {
           const response = processPayload(event.data.payload as T);
-          this.sendAcknowledgment(type, requestId, response, event.origin); // Pass event.origin as target origin
+          // Always send the acknowledgment back to the origin of the received message (parent window's origin)
+          this.sendAcknowledgment(type, requestId, response, event.origin);
         } catch (error) {
           if (handleError) handleError(error);
-          this.sendError(type, error, requestId, event.origin); // Pass event.origin as target origin
+          this.sendError(type, error, requestId, event.origin); // Use event.origin as the target origin to send error back
         }
       }
     };

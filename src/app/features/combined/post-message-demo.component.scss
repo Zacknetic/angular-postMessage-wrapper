@@ -1,0 +1,147 @@
+:host {
+  display: block;
+  height: 100vh;
+  padding: 20px;
+  box-sizing: border-box;
+  background-color: #f0f4f8;
+}
+
+.main-card {
+  height: calc(100% - 40px);
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+mat-card-header {
+  background-color: #3f51b5;
+  color: white;
+  padding: 16px;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+mat-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  overflow: hidden;
+}
+
+.content-container {
+  display: flex;
+  flex: 1;
+  gap: 20px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.chat-container, .log-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+h3 {
+  margin-top: 0;
+  color: #3f51b5;
+}
+
+.chat-messages, .log-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background-color: #fafafa;
+}
+
+.message-to, .message-from {
+  max-width: 70%;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.message-to {
+  align-self: flex-end;
+  background-color: #e8f5e9;
+  margin-left: auto;
+}
+
+.message-from {
+  align-self: flex-start;
+  background-color: #e3f2fd;
+  margin-right: auto;
+}
+
+.message-content {
+  margin-bottom: 5px;
+}
+
+.message-timestamp {
+  font-size: 0.8em;
+  color: #757575;
+  text-align: right;
+}
+
+.log-message {
+  margin-bottom: 5px;
+  font-family: monospace;
+}
+
+.input-container {
+  margin-bottom: 20px;
+}
+
+.input-container mat-form-field {
+  width: 100%;
+}
+
+.bottom-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+/* Material Design Overrides */
+.mat-mdc-raised-button {
+  font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  :host {
+    padding: 10px;
+  }
+
+  .main-card {
+    height: calc(100% - 20px);
+  }
+
+  .content-container {
+    flex-direction: column;
+  }
+
+  .chat-container, .log-container {
+    height: 50%;
+  }
+
+  .bottom-controls {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .action-buttons {
+    margin-top: 10px;
+  }
+}
